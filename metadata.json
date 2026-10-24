@@ -1,0 +1,8 @@
+{
+  "name": "ប្រព័ន្ធគ្រប់គ្រងលិខិតរដ្ឋបាលចេញ-ចូល",
+  "description": "ប្រព័ន្ធគ្រប់គ្រង និងតាមដានលិខិតរដ្ឋបាលចេញ-ចូល សុវត្ថិភាពខ្ពស់ ជូនដំណឹងតាម Telegram និងបម្រុងទុកទិន្នន័យលើពពកស្វ័យប្រវត្តិ",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
