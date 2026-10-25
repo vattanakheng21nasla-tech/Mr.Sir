@@ -216,9 +216,9 @@ export const OfficialPrintView: React.FC<OfficialPrintViewProps> = ({
           <div className="text-center space-y-16">
             <div>
               <div className="text-slate-600">រាជធានីភ្នំពេញ, ថ្ងៃទី....... ខែ....... ឆ្នាំ២០២៦</div>
-              <div className="font-bold text-slate-900 mt-1">ប្រធានអង្គភាព / ថ្នាក់ដឹកនាំ</div>
+              <div className="font-bold text-slate-900 mt-1">ប្រធានការិយាល័យស្តីទី</div>
             </div>
-            <div className="font-bold text-slate-900">ឯកឧត្តម ហេង វឌ្ឍនៈ</div>
+            <div className="font-bold text-slate-900">លោក ហេង វឌ្ឍនៈ</div>
           </div>
         </div>
 

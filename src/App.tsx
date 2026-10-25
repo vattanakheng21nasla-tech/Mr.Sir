@@ -25,6 +25,7 @@ import { BackupSettingsView } from './components/BackupSettingsView';
 import { OfficialPrintView } from './components/OfficialPrintView';
 import { AuditLogView } from './components/AuditLogView';
 import { LoginView } from './components/LoginView';
+import { UserManagementModal } from './components/UserManagementModal';
 
 import {
   FileDown,
@@ -68,6 +69,11 @@ export default function App() {
 
   const [printingDoc, setPrintingDoc] = useState<DocumentItem | null>(null);
 
+  // User Management State (Owner only, max 10 users quota)
+  const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
+  const [pendingUsersCount, setPendingUsersCount] = useState<number>(0);
+  const [activeUsersCount, setActiveUsersCount] = useState<number>(1);
+
   // Quick Tracking search code in tracking tab
   const [directSearchCode, setDirectSearchCode] = useState('');
   const [searchNotFound, setSearchNotFound] = useState(false);
@@ -80,6 +86,19 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const loadUserStats = useCallback(() => {
+    StorageService.fetchRemoteUsers().then((res) => {
+      if (res) {
+        setPendingUsersCount(res.pendingCount);
+        setActiveUsersCount(res.activeCount);
+      } else {
+        const local = StorageService.getUsers();
+        setPendingUsersCount(local.filter((u) => u.status === 'pending').length);
+        setActiveUsersCount(local.filter((u) => u.status === 'active').length);
+      }
+    });
+  }, []);
+
   // Initial load
   useEffect(() => {
     const docs = StorageService.getDocuments();
@@ -91,23 +110,47 @@ export default function App() {
     setAuditLogs(StorageService.getAuditLogs());
     setCurrentUser(StorageService.getCurrentUser());
 
+    // Load initial user counts
+    loadUserStats();
+
     // Check if initial backup record is needed
     if (StorageService.getBackupRecords().length === 0) {
       BackupService.createBackupSnapshot('automated_schedule', StorageService.getCurrentUser(), 'បម្រុងទុកទិន្នន័យដំបូង');
       setBackupRecords(StorageService.getBackupRecords());
     }
 
-    // Check URL parameters for ?track=DOC-...
-    const params = new URLSearchParams(window.location.search);
-    const trackParam = params.get('track');
-    if (trackParam) {
-      const match = docs.find((d) => d.trackingCode.toLowerCase() === trackParam.toLowerCase());
-      if (match) {
-        setTrackingDoc(match);
-        setIsTrackingOpen(true);
+    // Initial load from server for cross-device shared synchronization (Requirement 6)
+    StorageService.fetchRemoteDocuments().then((remoteDocs) => {
+      if (remoteDocs && remoteDocs.length > 0) {
+        setDocuments(remoteDocs);
       }
-    }
-  }, []);
+    });
+
+    // Background polling every 4 seconds to sync live documents and user requests across team members
+    const syncInterval = setInterval(() => {
+      StorageService.fetchRemoteDocuments().then((remoteDocs) => {
+        if (remoteDocs && remoteDocs.length > 0) {
+          setDocuments(remoteDocs);
+        }
+      });
+      loadUserStats();
+    }, 4000);
+
+    const onFocus = () => {
+      StorageService.fetchRemoteDocuments().then((remoteDocs) => {
+        if (remoteDocs && remoteDocs.length > 0) {
+          setDocuments(remoteDocs);
+        }
+      });
+      loadUserStats();
+    };
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(syncInterval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [loadUserStats]);
 
   // Sync state helpers
   const refreshAll = useCallback(() => {
@@ -200,7 +243,7 @@ export default function App() {
       timestamp: new Date().toLocaleDateString('en-CA') + ' ' + new Date().toLocaleTimeString('km-KH', { hour: '2-digit', minute: '2-digit' }),
       status: newStatus,
       actorName: currentUser.name,
-      actorRole: currentUser.role === 'admin' ? 'អភិបាលប្រព័ន្ធ' : currentUser.role === 'director' ? 'ថ្នាក់ដឹកនាំ' : 'មន្ត្រីរដ្ឋបាល',
+      actorRole: currentUser.role === 'owner' ? 'ប្រធានការិយាល័យស្តីទី' : currentUser.role === 'admin' ? 'អភិបាលប្រព័ន្ធ' : currentUser.role === 'director' ? 'ថ្នាក់ដឹកនាំ' : 'មន្ត្រីរដ្ឋបាល',
       actionTitle: `ប្តូរស្ថានភាពទៅជា "${newStatus}"`,
       notes: directiveNote || undefined
     };
@@ -292,21 +335,30 @@ export default function App() {
     showToast(`ការបម្រុងទុកទិន្នន័យ ${res.record.checksum} ទទួលបានជោគជ័យ!`);
   };
 
+  // Export success handler
+  const handleExportSuccess = (fileName: string, _format: 'excel' | 'csv', count: number) => {
+    showToast(`បានទាញយកឯកសារ ${fileName} (${count} លិខិត) ដោយជោគជ័យ!`);
+    setAuditLogs(StorageService.getAuditLogs());
+  };
+
   // User role switch
   const handleChangeUserRole = (newRole: CurrentUser['role']) => {
-    const roleMap: Record<CurrentUser['role'], string> = {
-      admin: 'ឯកឧត្តម ហេង វឌ្ឍនៈ (អភិបាល)',
-      director: 'ឯកឧត្តម ហេង វឌ្ឍនៈ (អគ្គនាយក)',
-      officer: 'លោក វ៉ាន់ សុវណ្ណារ៉ា (មន្ត្រីរដ្ឋបាល)'
+    const roleMap: Record<CurrentUser['role'], { name: string; department: string }> = {
+      owner: { name: 'លោក ហេង វឌ្ឍនៈ', department: 'ការិយាល័យរដ្ឋបាល និងផែនការ' },
+      admin: { name: 'លោក ហេង វឌ្ឍនៈ', department: 'ការិយាល័យរដ្ឋបាល និងផែនការ' },
+      director: { name: 'ឯកឧត្តម អគ្គនាយក', department: 'ថ្នាក់ដឹកនាំ / អគ្គនាយកដ្ឋាន' },
+      officer: { name: 'លោក វ៉ាន់ សុវណ្ណារ៉ា', department: 'នាយកដ្ឋានរដ្ឋបាល និងបុគ្គលិក' }
     };
+    const info = roleMap[newRole] || roleMap.owner;
     const updatedUser: CurrentUser = {
       ...currentUser,
       role: newRole,
-      name: roleMap[newRole]
+      name: info.name,
+      department: info.department
     };
     setCurrentUser(updatedUser);
     StorageService.saveCurrentUser(updatedUser);
-    showToast(`បានប្តូរទៅកាន់គណនី៖ ${updatedUser.name}`);
+    showToast(`បានប្តូរទៅកាន់គណនី៖ ${updatedUser.name} (${newRole === 'owner' ? 'ប្រធានការិយាល័យស្តីទី' : newRole})`);
   };
 
   // Authentication Handlers
@@ -319,12 +371,10 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    if (window.confirm('តើអ្នកពិតជាចង់ចាកចេញពីប្រព័ន្ធរដ្ឋបាលមែនទេ?')) {
-      StorageService.logout();
-      setIsAuthenticated(false);
-      setAuditLogs(StorageService.getAuditLogs());
-      showToast('បានចាកចេញពីប្រព័ន្ធដោយសុវត្ថិភាព!');
-    }
+    StorageService.logout();
+    setIsAuthenticated(false);
+    setAuditLogs(StorageService.getAuditLogs());
+    showToast('បានចាកចេញពីប្រព័ន្ធដោយជោគជ័យ!');
   };
 
   // If user is not authenticated, show the Login Screen
@@ -360,6 +410,9 @@ export default function App() {
         currentUser={currentUser}
         onChangeUserRole={handleChangeUserRole}
         onLogout={handleLogout}
+        onOpenUserManagement={() => setIsUserManagementOpen(true)}
+        pendingUsersCount={pendingUsersCount}
+        activeUsersCount={activeUsersCount}
       />
 
       {/* Main Workspace Content */}
@@ -483,6 +536,7 @@ export default function App() {
                 }}
                 onDeleteDocument={handleDeleteDocument}
                 onQuickTelegramSend={handleQuickTelegramSend}
+                onExportSuccess={handleExportSuccess}
               />
             </div>
           </div>
@@ -533,6 +587,7 @@ export default function App() {
               }}
               onDeleteDocument={handleDeleteDocument}
               onQuickTelegramSend={handleQuickTelegramSend}
+              onExportSuccess={handleExportSuccess}
             />
           </div>
         )}
@@ -582,6 +637,7 @@ export default function App() {
               }}
               onDeleteDocument={handleDeleteDocument}
               onQuickTelegramSend={handleQuickTelegramSend}
+              onExportSuccess={handleExportSuccess}
             />
           </div>
         )}
@@ -770,6 +826,14 @@ export default function App() {
         }}
         document={trackingDoc}
         onPrintDocument={(doc) => setPrintingDoc(doc)}
+      />
+
+      {/* User Management Modal (Owner exclusive, 10 users quota) */}
+      <UserManagementModal
+        isOpen={isUserManagementOpen}
+        onClose={() => setIsUserManagementOpen(false)}
+        currentUser={currentUser}
+        onUserListChanged={loadUserStats}
       />
 
       {/* Toast Feedback Notification */}

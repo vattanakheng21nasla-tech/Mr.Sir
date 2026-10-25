@@ -1,4 +1,4 @@
-import { DocumentItem, CurrentUser } from '../types/document';
+import { DocumentItem, CurrentUser, UserAccount } from '../types/document';
 
 export const INITIAL_DOCUMENTS: DocumentItem[] = [
   {
@@ -93,8 +93,8 @@ export const INITIAL_DOCUMENTS: DocumentItem[] = [
         id: 'wf-4',
         timestamp: '2026-10-23 11:45',
         status: 'forwarded_leader',
-        actorName: 'ឯកឧត្តម ហេង វឌ្ឍនៈ',
-        actorRole: 'អគ្គនាយក',
+        actorName: 'លោក ហេង វឌ្ឍនៈ',
+        actorRole: 'ប្រធានការិយាល័យស្តីទី',
         actionTitle: 'ឆ្លងពិនិត្យ និងកែសម្រួល',
         notes: 'បានឯកភាពលើខ្លឹមសារសង្ខេប'
       },
@@ -102,8 +102,8 @@ export const INITIAL_DOCUMENTS: DocumentItem[] = [
         id: 'wf-5',
         timestamp: '2026-10-23 16:20',
         status: 'approved',
-        actorName: 'ឯកឧត្តម ហេង វឌ្ឍនៈ',
-        actorRole: 'អគ្គនាយក',
+        actorName: 'លោក ហេង វឌ្ឍនៈ',
+        actorRole: 'ប្រធានការិយាល័យស្តីទី',
         actionTitle: 'បានចុះហត្ថលេខា និងវាយត្រាអនុម័ត',
         notes: 'រៀបចំបញ្ជូនចេញទៅក្រសួងសេដ្ឋកិច្ច'
       }
@@ -194,8 +194,8 @@ export const INITIAL_DOCUMENTS: DocumentItem[] = [
         id: 'wf-8',
         timestamp: '2026-10-24 09:00',
         status: 'approved',
-        actorName: 'ឯកឧត្តម ហេង វឌ្ឍនៈ',
-        actorRole: 'អគ្គនាយក',
+        actorName: 'លោក ហេង វឌ្ឍនៈ',
+        actorRole: 'ប្រធានការិយាល័យស្តីទី',
         actionTitle: 'ចុះហត្ថលេខាឯកភាពលើបញ្ជីវត្តមានមន្ត្រី',
         notes: 'អនុញ្ញាតឱ្យចូលរួមបណ្តុះបណ្តាល'
       },
@@ -281,44 +281,42 @@ export const INITIAL_TELEGRAM_CONFIG = {
 };
 
 export const CURRENT_OFFICER_USER: CurrentUser = {
-  id: 'usr-001',
-  name: 'ឯកឧត្តម ហេង វឌ្ឍនៈ',
-  username: 'vattanak.admin',
+  id: 'usr-owner-001',
+  name: 'លោក ហេង វឌ្ឍនៈ',
+  username: 'vattanak',
   email: 'vattanak.heng.21nasla@gmail.com',
-  role: 'admin',
-  department: 'អគ្គនាយកដ្ឋានរដ្ឋបាល និងហិរញ្ញវត្ថុ',
-  lastLogin: '2026-10-24 14:30'
+  role: 'owner',
+  department: 'ការិយាល័យរដ្ឋបាល និងផែនការ',
+  lastLogin: '2026-10-24 14:30',
+  status: 'active'
 };
+
+export const INITIAL_USERS: UserAccount[] = [
+  {
+    id: 'usr-owner-001',
+    name: 'លោក ហេង វឌ្ឍនៈ',
+    username: 'vattanak',
+    email: 'vattanak.heng.21nasla@gmail.com',
+    role: 'owner',
+    department: 'ការិយាល័យរដ្ឋបាល និងផែនការ',
+    password: 'vattanak123',
+    title: 'ប្រធានការិយាល័យស្តីទី (Owner - សិទ្ធិកំណត់ និងកែប្រែ)',
+    status: 'active',
+    approvedAt: '2026-10-24 08:00',
+    approvedBy: 'System Root'
+  }
+];
 
 export const DEMO_USERS: (CurrentUser & { password: string; title: string })[] = [
   {
-    id: 'usr-001',
-    name: 'ឯកឧត្តម ហេង វឌ្ឍនៈ',
-    username: 'admin',
+    id: 'usr-owner-001',
+    name: 'លោក ហេង វឌ្ឍនៈ',
+    username: 'vattanak',
     email: 'vattanak.heng.21nasla@gmail.com',
-    role: 'admin',
-    department: 'អគ្គនាយកដ្ឋានរដ្ឋបាល និងហិរញ្ញវត្ថុ',
-    password: 'admin',
-    title: 'អភិបាលប្រព័ន្ធ (System Administrator)'
-  },
-  {
-    id: 'usr-002',
-    name: 'ឯកឧត្តម ហេង វឌ្ឍនៈ',
-    username: 'director',
-    email: 'director@docutrack.gov.kh',
-    role: 'director',
-    department: 'ថ្នាក់ដឹកនាំ / អគ្គនាយកដ្ឋាន',
-    password: '123',
-    title: 'ថ្នាក់ដឹកនាំ / អគ្គនាយក (Director General)'
-  },
-  {
-    id: 'usr-003',
-    name: 'លោក វ៉ាន់ សុវណ្ណារ៉ា',
-    username: 'officer',
-    email: 'sovannara@docutrack.gov.kh',
-    role: 'officer',
-    department: 'នាយកដ្ឋានរដ្ឋបាល និងបុគ្គលិក',
-    password: '123',
-    title: 'មន្ត្រីរដ្ឋបាល / ចុះបញ្ជី (Administrative Clerk)'
+    role: 'owner',
+    department: 'ការិយាល័យរដ្ឋបាល និងផែនការ',
+    password: 'vattanak123',
+    title: 'ប្រធានការិយាល័យស្តីទី (Owner - សិទ្ធិកំណត់ និងកែប្រែ)',
+    status: 'active'
   }
 ];

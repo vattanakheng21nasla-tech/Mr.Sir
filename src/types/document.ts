@@ -121,7 +121,25 @@ export interface AuditLog {
   details: string;
 }
 
-export type UserRole = 'admin' | 'director' | 'officer';
+export type UserRole = 'owner' | 'admin' | 'director' | 'officer';
+export type UserStatus = 'active' | 'pending' | 'rejected';
+
+export interface UserAccount {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  password?: string;
+  role: UserRole;
+  title?: string;
+  department: string;
+  status: UserStatus;
+  requestedAt?: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  rejectionReason?: string;
+  notes?: string;
+}
 
 export interface CurrentUser {
   id: string;
@@ -131,4 +149,5 @@ export interface CurrentUser {
   email?: string;
   username?: string;
   lastLogin?: string;
+  status?: UserStatus;
 }
